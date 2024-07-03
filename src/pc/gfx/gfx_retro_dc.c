@@ -22,10 +22,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-#include "gl.h"
-#include "glu.h"
-#include "glext.h"
-#include "glkos.h"
+#include <GL/gl.h>
+#include <GL/glu.h>
+#include <GL/glext.h>
+#include <GL/glkos.h>
 #include "gl_fast_vert.h"
 #endif
 
