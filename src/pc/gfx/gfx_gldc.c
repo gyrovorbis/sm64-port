@@ -533,14 +533,24 @@ static void gfx_opengl_draw_triangles(float buf_vbo[], UNUSED size_t buf_vbo_len
         glDisable(GL_BLEND);
     }
 
-    if(cur_shader->shader_id == 18874437){ // 0x1200045, skybox
-        glDepthMask(false);
+  if(cur_shader->shader_id == 18874437){ // 0x1200045, skybox  // may need to relook at this
+        glDepthMask(GL_FALSE);
+        glDepthFunc(GL_LEQUAL);
+        glDisable(GL_BLEND);
+        glDisable(GL_FOG);
+        glPushMatrix();
+        glLoadIdentity();
     }
+
 
     glDrawArrays(GL_TRIANGLES, 0, 3 * buf_vbo_num_tris);
 
     if(cur_shader->shader_id == 18874437){ // 0x1200045, skybox
-        glDepthMask(true);
+        glPopMatrix();
+        glDepthMask(GL_TRUE);
+        glDepthFunc(GL_LESS);
+        glEnable(GL_BLEND);
+        glEnable(GL_FOG);
     }
 
     // if there's two textures, draw polys with the second texture
