@@ -1,10 +1,15 @@
 # DC Instructions
-need mkisofs and cdi4dc installed
-git clone -b kos_2_1_0_update https://github.com/Bruceleeto/sm64-port.git
-cd sm64-port 
-source /opt/toolchains/dc/kos/environ.sh
-make TARGET_DC=1 scramble -j12
-make run (assuming you got flycast installed)
+need mkisofs and cdi4dc installed.
+
+`git clone -b kos_2_1_0_update https://github.com/Bruceleeto/sm64-port.git` 
+
+`cd sm64-port `
+
+`source /opt/toolchains/dc/kos/environ.sh`
+
+`make TARGET_DC=1 scramble -j12`
+
+`make run` (assuming you got flycast installed)
 
 # PSP Port of PC
 
