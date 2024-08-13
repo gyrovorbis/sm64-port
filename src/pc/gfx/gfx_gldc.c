@@ -439,15 +439,17 @@ static void gfx_opengl_set_depth_mask(bool z_upd) {
     glDepthMask(z_upd);
 }
 
+static bool is_zmode_decal = false;
+// Polyoffset currently doesn't work so gotta workaround it. 
 static void gfx_opengl_set_zmode_decal(bool zmode_decal) {
+    is_zmode_decal = zmode_decal;
     if (zmode_decal) {
-        glPolygonOffset(-2, -2);
-        glEnable(GL_POLYGON_OFFSET_FILL);
+        glDepthFunc(GL_LEQUAL);  
     } else {
-        glPolygonOffset(0, 0);
-        glDisable(GL_POLYGON_OFFSET_FILL);
+        glDepthFunc(GL_LESS);  
     }
 }
+
 
 static void gfx_opengl_set_viewport(int x, int y, int width, int height) {
     glViewport(x, y, width, height);
@@ -551,8 +553,24 @@ static void gfx_opengl_draw_triangles(float buf_vbo[], UNUSED size_t buf_vbo_len
     }
 
 
+  if (is_zmode_decal) {
+        // Adjust depth values slightly for zmode_decal objects
+        glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LEQUAL);
+        glDepthMask(GL_TRUE);
+        
+        // Push the geometry slightly towards the camera
+        glPushMatrix();
+        glTranslatef(0.0f, 2.1f, 0.9f);  // magic values need fine tuning. 
+    }
+
     glDrawArrays(GL_TRIANGLES, 0, 3 * buf_vbo_num_tris);
- 
+
+    if (is_zmode_decal) {
+        glPopMatrix();
+        glDepthFunc(GL_LESS);  // Reset depth function
+    }
+    
     // pretty sure this is needed)
     if (cur_shader->shader_id == 0x0000038D) {
         glDisable(GL_BLEND);
