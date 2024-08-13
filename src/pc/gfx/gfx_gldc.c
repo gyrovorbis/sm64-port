@@ -174,7 +174,7 @@ static inline GLenum texenv_set_texture_color(struct ShaderProgram *prg) {
 
     // HACK: lord forgive me for this, but this is easier
     switch (prg->shader_id) {
-        case 0x0000038D: // mario's eyes
+       // case 0x0000038D: // mario's eyes
         case 0x01045A00: // peach letter
         case 0x01200A00: // intro copyright fade in
             mode = GL_DECAL;
@@ -526,7 +526,15 @@ static void gfx_opengl_draw_triangles(float buf_vbo[], UNUSED size_t buf_vbo_len
     // if there's two textures, set primary texture first
     if (cur_shader->texture_used[1])
         glBindTexture(GL_TEXTURE_2D, tmu_state[cur_shader->texture_ord[0]].tex);
-
+    
+    if (cur_shader->shader_id == 0x0000038D) {
+        // Face fix. 
+        glEnable(GL_TEXTURE_2D);
+        glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
+        glEnable(GL_BLEND);
+      //  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    }
+    
     /*@Error: Goddard hack */
     if(cur_shader->shader_id == 0x551){
         glDisable(GL_TEXTURE_2D);
@@ -544,7 +552,13 @@ static void gfx_opengl_draw_triangles(float buf_vbo[], UNUSED size_t buf_vbo_len
 
 
     glDrawArrays(GL_TRIANGLES, 0, 3 * buf_vbo_num_tris);
-
+ 
+    // pretty sure this is needed)
+    if (cur_shader->shader_id == 0x0000038D) {
+        glDisable(GL_BLEND);
+        glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+    }
+    
     if(cur_shader->shader_id == 18874437){ // 0x1200045, skybox
         glPopMatrix();
         glDepthMask(GL_TRUE);
