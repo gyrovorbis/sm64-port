@@ -174,7 +174,7 @@ static inline GLenum texenv_set_texture_color(struct ShaderProgram *prg) {
 
     // HACK: lord forgive me for this, but this is easier
     switch (prg->shader_id) {
-        case 0x0000038D: // mario's eyes
+       // case 0x0000038D: // mario's eyes
         case 0x01045A00: // peach letter
         case 0x01200A00: // intro copyright fade in
             mode = GL_DECAL;
@@ -439,15 +439,17 @@ static void gfx_opengl_set_depth_mask(bool z_upd) {
     glDepthMask(z_upd);
 }
 
+static bool is_zmode_decal = false;
+// Polyoffset currently doesn't work so gotta workaround it. 
 static void gfx_opengl_set_zmode_decal(bool zmode_decal) {
+    is_zmode_decal = zmode_decal;
     if (zmode_decal) {
-        glPolygonOffset(-2, -2);
-        glEnable(GL_POLYGON_OFFSET_FILL);
+        glDepthFunc(GL_LEQUAL);  
     } else {
-        glPolygonOffset(0, 0);
-        glDisable(GL_POLYGON_OFFSET_FILL);
+        glDepthFunc(GL_LESS);  
     }
 }
+
 
 static void gfx_opengl_set_viewport(int x, int y, int width, int height) {
     glViewport(x, y, width, height);
@@ -526,21 +528,61 @@ static void gfx_opengl_draw_triangles(float buf_vbo[], UNUSED size_t buf_vbo_len
     // if there's two textures, set primary texture first
     if (cur_shader->texture_used[1])
         glBindTexture(GL_TEXTURE_2D, tmu_state[cur_shader->texture_ord[0]].tex);
-
+    
+    if (cur_shader->shader_id == 0x0000038D) {
+        // Face fix. 
+        glEnable(GL_TEXTURE_2D);
+        glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
+        glEnable(GL_BLEND);
+      //  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    }
+    
     /*@Error: Goddard hack */
     if(cur_shader->shader_id == 0x551){
         glDisable(GL_TEXTURE_2D);
         glDisable(GL_BLEND);
     }
 
-    if(cur_shader->shader_id == 18874437){ // 0x1200045, skybox
-        glDepthMask(false);
+  if(cur_shader->shader_id == 18874437){ // 0x1200045, skybox  // may need to relook at this
+        glDepthMask(GL_FALSE);
+        glDepthFunc(GL_LEQUAL);
+        glDisable(GL_BLEND);
+        glDisable(GL_FOG);
+        glPushMatrix();
+        glLoadIdentity();
+    }
+
+
+  if (is_zmode_decal) {
+        // Adjust depth values slightly for zmode_decal objects
+        glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LEQUAL);
+        glDepthMask(GL_TRUE);
+        
+        // Push the geometry slightly towards the camera
+        glPushMatrix();
+        glTranslatef(0.0f, 2.1f, 0.9f);  // magic values need fine tuning. 
     }
 
     glDrawArrays(GL_TRIANGLES, 0, 3 * buf_vbo_num_tris);
 
+    if (is_zmode_decal) {
+        glPopMatrix();
+        glDepthFunc(GL_LESS);  // Reset depth function
+    }
+    
+    // pretty sure this is needed)
+    if (cur_shader->shader_id == 0x0000038D) {
+        glDisable(GL_BLEND);
+        glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+    }
+    
     if(cur_shader->shader_id == 18874437){ // 0x1200045, skybox
-        glDepthMask(true);
+        glPopMatrix();
+        glDepthMask(GL_TRUE);
+        glDepthFunc(GL_LESS);
+        glEnable(GL_BLEND);
+        glEnable(GL_FOG);
     }
 
     // if there's two textures, draw polys with the second texture
